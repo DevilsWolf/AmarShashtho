@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block title %}Find a Doctor{% endblock %}
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
+    <!-- Page Header -->
+    <div class="text-center">
+        <h1 class="text-3xl font-bold text-white">Find a Doctor</h1>
+        <p class="mt-2 text-gray-400">Search our network of verified medical professionals.</p>
+    </div>
+
+    <!-- Search Form -->
+    <form method="GET" action="{{ url_for('doctor_search') }}" class="mt-8 max-w-4xl mx-auto p-6 bg-gray-800 border border-gray-700 rounded-xl">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-300">Doctor's Name</label>
+                <input type="text" name="name" id="name" value="{{ search_values.name }}" class="mt-1 bg-gray-900 border-gray-600 text-white block w-full sm:text-sm rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., Dr. Amir Hossain">
+            </div>
+            <div>
+                <label for="specialty" class="block text-sm font-medium text-gray-300">Specialty</label>
+                <select name="specialty" id="specialty" class="mt-1 bg-gray-900 border-gray-600 text-white block w-full sm:text-sm rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Specialties</option>
+                    {% for spec in specialties|sort %}
+                        <option value="{{ spec }}" {% if search_values.specialty == spec %}selected{% endif %}>{{ spec }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="location" class="block text-sm font-medium text-gray-300">Location / Area</label>
+                <input type="text" name="location" id="location" value="{{ search_values.location }}" class="mt-1 bg-gray-900 border-gray-600 text-white block w-full sm:text-sm rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., Dhaka">
+            </div>
+        </div>
+        <div class="mt-4 flex justify-end gap-4">
+            <a href="{{ url_for('doctor_search') }}" class="text-sm text-gray-400 hover:text-white py-2 px-4">Clear</a>
+            <button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Search</button>
+        </div>
+    </form>
+
+    <!-- Results -->
+    <div class="mt-12">
+        <h2 class="text-xl font-bold text-white mb-4">
+            {% if search_values.name or search_values.specialty or search_values.location %}
+                Search Results ({{ doctors|length }})
+            {% else %}
+                All Doctors ({{ doctors|length }})
+            {% endif %}
+        </h2>
+        {% if doctors %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for doc in doctors %}
+                <a href="{{ url_for('doctor_profile', doctor_id=doc.id) }}" class="group block bg-gray-800 border border-gray-700 p-4 rounded-lg hover:border-blue-500 transition-colors">
+                    <div class="flex items-center space-x-4">
+                        <img class="h-16 w-16 rounded-full object-cover bg-gray-900" src="{{ doc.profile_image if doc.profile_image else 'https://via.placeholder.com/150' }}" alt="Doctor photo">
+                        <div>
+                            <h4 class="text-lg font-bold text-white group-hover:text-blue-400">{{ doc.name }}</h4>
+                            <p class="text-blue-400 font-semibold">{{ doc.primary_specialty }}</p>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-sm text-gray-400"><span class="font-semibold text-gray-300">Location:</span> {{ doc.location_text }}</p>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12 bg-gray-800 rounded-lg">
+                <h3 class="text-lg font-semibold text-white">No Doctors Found</h3>
+                <p class="mt-1 text-gray-400">Try adjusting your search filters.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

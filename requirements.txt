@@ -1,0 +1,9 @@
+Flask
+SQLAlchemy
+Flask-Login
+bcrypt
+PyMuPDF
+Pillow
+requests
+python-dotenv
+werkzeug

@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block title %}Therapeutic Chat{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-gray-800 border border-gray-700 rounded-xl shadow-lg flex flex-col h-[70vh] animate-fade-in-up">
+    <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-white">Therapeutic Chat Assistant</h1>
+        <a href="{{ url_for('clear_chat') }}" class="text-sm text-red-500 hover:text-red-400">Clear Conversation</a>
+    </div>
+
+    <!-- Chat Messages Display -->
+    <div id="chat-window" class="p-6 flex-1 overflow-y-auto space-y-6">
+        {% for message in chat_history %}
+            {% if message.role == 'assistant' %}
+            <div class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600/30 text-blue-300 flex items-center justify-center font-bold">A</span>
+                <div class="bg-gray-700 p-3 rounded-lg rounded-tl-none">
+                    <p class="text-sm text-gray-200">{{ message.content }}</p>
+                </div>
+            </div>
+            {% elif message.role == 'user' %}
+            <div class="flex items-start gap-3 justify-end">
+                <div class="bg-blue-600 text-white p-3 rounded-lg rounded-br-none">
+                    <p class="text-sm">{{ message.content }}</p>
+                </div>
+                <span class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-600 text-gray-300 flex items-center justify-center font-bold">U</span>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Message Input Form -->
+    <div class="p-4 border-t border-gray-700 bg-gray-800">
+        <form action="{{ url_for('therapeutic_chat') }}" method="POST" class="flex gap-3">
+            <input type="text" name="message" class="flex-1 block w-full bg-gray-900 border-gray-600 text-white rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Type your message..." autofocus autocomplete="off">
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">Send</button>
+        </form>
+    </div>
+</div>
+<div class="text-center mt-6">
+    <a href="{{ url_for('dashboard') }}" class="text-sm text-gray-400 hover:text-white">&larr; Back to Dashboard</a>
+</div>
+
+<script>
+    const chatWindow = document.getElementById('chat-window');
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+</script>
+{% endblock %}

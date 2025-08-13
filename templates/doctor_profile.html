@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}{{ doctor.name }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto bg-gray-800 border border-gray-700 p-6 sm:p-8 rounded-xl shadow-lg animate-fade-in-up">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start gap-6">
+        <img class="h-32 w-32 rounded-full object-cover bg-gray-900 border-2 border-gray-600" src="{{ doctor.profile_image if doctor.profile_image else 'https://via.placeholder.com/150' }}" alt="Doctor photo">
+        <div>
+            <h1 class="text-3xl font-bold text-white">{{ doctor.name }}</h1>
+            <p class="mt-1 text-xl text-blue-400 font-semibold">{{ doctor.primary_specialty }}</p>
+        </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="my-8 border-t border-gray-700"></div>
+
+    <!-- Details -->
+    <div class="space-y-6">
+        <div>
+            <h3 class="font-semibold text-gray-300 text-lg">Location</h3>
+            <p class="mt-1 text-gray-400">{{ doctor.location_text }}</p>
+        </div>
+        <div>
+            <h3 class="font-semibold text-gray-300 text-lg">Clinic / Hospital Address</h3>
+            <p class="mt-1 text-gray-400">{{ doctor.clinic_address }}</p>
+            <a href="https://www.google.com/maps/search/?api=1&query={{ doctor.clinic_address|urlencode }}" target="_blank" class="mt-2 inline-block bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg text-sm hover:bg-blue-700 transition-colors">Open in Google Maps</a>
+        </div>
+        <div>
+            <h3 class="font-semibold text-gray-300 text-lg">Qualifications & Notes</h3>
+            <p class="mt-1 text-gray-400 whitespace-pre-wrap">{{ doctor.notes }}</p>
+        </div>
+    </div>
+    
+    <!-- Back to Search -->
+    <div class="text-center mt-8 pt-6 border-t border-gray-700">
+        <a href="{{ url_for('doctor_search') }}" class="text-gray-400 hover:text-white">&larr; Back to Doctor Search</a>
+    </div>
+</div>
+{% endblock %}

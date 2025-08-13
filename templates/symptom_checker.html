@@ -1,0 +1,175 @@
+{% extends "layout.html" %}
+{% block title %}Interactive Symptom Checker{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-gray-800 border border-gray-700 rounded-xl shadow-lg flex flex-col h-[75vh] animate-fade-in-up">
+    <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-white">Interactive Symptom Checker</h1>
+        <a href="{{ url_for('symptom_checker_clear') }}" class="text-sm text-red-500 hover:text-red-400">Start Over</a>
+    </div>
+
+    <!-- Chat Messages Display -->
+    <div id="chat-window" class="p-6 flex-1 overflow-y-auto space-y-6">
+        <!-- Messages will be dynamically added here by JavaScript -->
+    </div>
+
+    <!-- Final Analysis Display (hidden by default) -->
+    <div id="final-analysis" class="p-6 flex-1 overflow-y-auto space-y-4 hidden">
+        <h2 class="text-xl font-bold text-white">Final Analysis</h2>
+        <div class="space-y-4">
+            <div>
+                <h3 class="font-semibold text-gray-300 text-lg">Possible Causes</h3>
+                <p id="possible-causes" class="mt-1 text-gray-400 whitespace-pre-wrap"></p>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-300 text-lg">Suggested Specialties</h3>
+                <div id="suggested-specialties" class="flex flex-wrap gap-2 mt-2"></div>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-300 text-lg">Recommended Next Steps</h3>
+                <p id="next-steps" class="mt-1 text-gray-400 whitespace-pre-wrap"></p>
+            </div>
+            <a id="find-doctors-link" href="#" class="inline-block bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Find a Doctor &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Message Input Form -->
+    <div id="message-form-container" class="p-4 border-t border-gray-700 bg-gray-800">
+        <form id="symptom-form" class="flex gap-3">
+            <input type="text" id="message-input" class="flex-1 block w-full bg-gray-900 border-gray-600 text-white rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Describe your symptom..." autofocus autocomplete="off">
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">Send</button>
+        </form>
+    </div>
+</div>
+<div class="text-center mt-6">
+    <a href="{{ url_for('dashboard') }}" class="text-sm text-gray-400 hover:text-white">&larr; Back to Dashboard</a>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatWindow = document.getElementById('chat-window');
+        const finalAnalysisDiv = document.getElementById('final-analysis');
+        const formContainer = document.getElementById('message-form-container');
+        const form = document.getElementById('symptom-form');
+        const input = document.getElementById('message-input');
+
+        let chatHistory = {{ chat_history | tojson }};
+
+        function renderChat() {
+            chatWindow.innerHTML = '';
+            chatHistory.forEach(msg => addMessageToChat(msg.role, msg.content));
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function addMessageToChat(role, text) {
+            const messageDiv = document.createElement('div');
+            if (role === 'assistant') {
+                messageDiv.className = 'flex items-start gap-3';
+                messageDiv.innerHTML = `
+                    <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600/30 text-blue-300 flex items-center justify-center font-bold">A</span>
+                    <div class="bg-gray-700 p-3 rounded-lg rounded-tl-none"><p class="text-sm text-gray-200">${text}</p></div>
+                `;
+            } else { // user
+                messageDiv.className = 'flex items-start gap-3 justify-end';
+                messageDiv.innerHTML = `
+                    <div class="bg-blue-600 text-white p-3 rounded-lg rounded-br-none"><p class="text-sm">${text}</p></div>
+                    <span class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-600 text-gray-300 flex items-center justify-center font-bold">U</span>
+                `;
+            }
+            chatWindow.appendChild(messageDiv);
+        }
+        
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'flex items-start gap-3';
+            typingDiv.innerHTML = `
+                <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600/30 text-blue-300 flex items-center justify-center font-bold">A</span>
+                <div class="bg-gray-700 p-3 rounded-lg rounded-tl-none"><p class="text-sm text-gray-400 italic">Thinking...</p></div>
+            `;
+            chatWindow.appendChild(typingDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function showFinalAnalysis(analysis) {
+            document.getElementById('possible-causes').textContent = analysis.POSSIBLE_CAUSES;
+            document.getElementById('next-steps').textContent = analysis.NEXT_STEPS;
+            
+            const specialtiesContainer = document.getElementById('suggested-specialties');
+            specialtiesContainer.innerHTML = '';
+            const specialties = analysis.SUGGESTED_SPECIALTIES.split(',').map(s => s.trim());
+            specialties.forEach(spec => {
+                const span = document.createElement('span');
+                span.className = 'px-3 py-1 bg-blue-500/10 text-blue-300 border border-blue-500/20 rounded-full text-sm font-medium';
+                span.textContent = spec;
+                specialtiesContainer.appendChild(span);
+            });
+
+            const findDoctorsLink = document.getElementById('find-doctors-link');
+            const searchParams = new URLSearchParams();
+            if (specialties.length > 0 && specialties[0]) {
+                searchParams.append('specialty', specialties[0]);
+            }
+            findDoctorsLink.href = `/doctors?${searchParams.toString()}`;
+
+            chatWindow.classList.add('hidden');
+            formContainer.classList.add('hidden');
+            finalAnalysisDiv.classList.remove('hidden');
+        }
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const userMessage = input.value.trim();
+            if (!userMessage) return;
+
+            addMessageToChat('user', userMessage);
+            chatHistory.push({ role: 'user', content: userMessage });
+            input.value = '';
+            input.disabled = true;
+            showTypingIndicator();
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            try {
+                const response = await fetch('/symptom_checker/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMessage })
+                });
+                
+                removeTypingIndicator();
+                input.disabled = false;
+                input.focus();
+
+                if (!response.ok) {
+                    addMessageToChat('assistant', 'Sorry, a server error occurred. Please try again.'); return;
+                }
+                
+                const data = await response.json();
+
+                // --- THIS IS THE FIX ---
+                // The backend now adds `is_final: true` to the final analysis.
+                if (data.is_final === true) {
+                    showFinalAnalysis(data);
+                } else if (data.question) {
+                    addMessageToChat('assistant', data.question);
+                    chatHistory.push({ role: 'assistant', content: data.question });
+                } else {
+                    addMessageToChat('assistant', data.error || 'Sorry, I received an unexpected response from the AI.');
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                removeTypingIndicator();
+                addMessageToChat('assistant', 'Sorry, I couldn\'t connect. Please check your connection and try again.');
+                input.disabled = false;
+            }
+        });
+
+        renderChat();
+    });
+</script>
+{% endblock %}
